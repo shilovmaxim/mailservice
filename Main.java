@@ -1,3 +1,5 @@
+package Tests.MailService;
+
 import java.util.*;
 import java.util.function.*;
 
@@ -81,20 +83,20 @@ public class Main {
 
     }
 
-    public static class MailMessage extends AbstractSendable<String> {
+    public static class MailMessage extends Mail<String> {
         public MailMessage(String from, String to, String content) {
             super(from, to, content);
         }
     }
 
-    public static class Salary extends AbstractSendable<Integer> {
+    public static class Salary extends Mail<Integer> {
         public Salary(String from, String to, Integer content) {
             super(from, to, content);
         }
     }
 
-    public static class MailService<T> implements Consumer<AbstractSendable<T>> {
-        Map<String, List<T>> map = new HashMap<>() {
+    public static class MailService<T> implements Consumer<Mail<T>> {
+        Map<String, List<T>> mailMap = new HashMap<>() {
             @Override
             public List<T> get(Object key) {
                 return super.getOrDefault(key, Collections.emptyList());
@@ -102,23 +104,30 @@ public class Main {
         };
 
         public Map<String, List<T>> getMailBox() {
-            return map;
+            return mailMap;
         }
 
         @Override
-        public void accept(AbstractSendable<T> send) {
-            map.computeIfAbsent(send.getTo(), x -> new LinkedList<>()).add(send.getContent());
+        public void accept(Mail<T> send) {
+            List<T> list = mailMap.get(send.getTo());
+            if (list.size() == 0) {
+                list = new ArrayList<>();
+            }
+            list.add(send.getContent());
+            mailMap.put(send.getTo(), list);
+            // Можно короче (в одну строку)
+            // mailMap.computeIfAbsent(send.getTo(), x -> new ArrayList<>()).add(send.getContent());
         }
     }
 
 
-    public static abstract class AbstractSendable<T> {
+    public static abstract class Mail<T> {
 
         protected final String from;
         protected final String to;
         protected final T content;
 
-        public AbstractSendable(String from, String to, T content) {
+        public Mail(String from, String to, T content) {
             this.from = from;
             this.to = to;
             this.content = content;
